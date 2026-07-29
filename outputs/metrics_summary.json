@@ -1,0 +1,73 @@
+{
+  "dataset_size": 1200,
+  "representation_pct_by_level": {
+    "Female": {
+      "Associate": 50.0,
+      "Senior": 43.71,
+      "Lead": 40.0,
+      "Manager": 29.37,
+      "Director": 36.9
+    },
+    "Male": {
+      "Associate": 50.0,
+      "Senior": 56.29,
+      "Lead": 60.0,
+      "Manager": 70.63,
+      "Director": 63.1
+    }
+  },
+  "pay_gap_overall": {
+    "male_avg_salary": 87170.65,
+    "female_avg_salary": 75761.36,
+    "gap_pct": 13.09,
+    "t_stat": 8.834,
+    "p_value": 0.0,
+    "significant_at_5pct": true
+  },
+  "pay_gap_by_level": {
+    "Female": {
+      "Associate": 56326.64,
+      "Senior": 73691.67,
+      "Lead": 89271.41,
+      "Manager": 107149.64,
+      "Director": 124107.94
+    },
+    "Male": {
+      "Associate": 61524.92,
+      "Senior": 79223.4,
+      "Lead": 96554.33,
+      "Manager": 115814.73,
+      "Director": 131033.43
+    },
+    "gap_pct": {
+      "Associate": 8.45,
+      "Senior": 6.98,
+      "Lead": 7.54,
+      "Manager": 7.48,
+      "Director": 5.29
+    }
+  },
+  "promotion_rates_pct": {
+    "Female": 29.18,
+    "Male": 34.4
+  },
+  "promotion_chi_square_test": {
+    "chi2": 3.433,
+    "p_value": 0.06389
+  },
+  "attrition_rates_pct": {
+    "Female": 10.7,
+    "Male": 10.06
+  },
+  "ml_model_performance": {
+    "accuracy": 0.66,
+    "auc": 0.56
+  },
+  "fairness_audit": {
+    "predicted_promotion_rate_male": 5.29,
+    "predicted_promotion_rate_female": 8.46,
+    "disparate_impact_ratio": 1.598,
+    "passes_four_fifths_rule": true,
+    "statistical_parity_difference": 3.17
+  }
+}
