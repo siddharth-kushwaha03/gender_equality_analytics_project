@@ -73,6 +73,66 @@ def fairness_metrics(res):
     return rm, rf, dir_ratio
 
 
+USERS = {
+    "admin": {
+        "password": "admin123",
+        "name": "Dr. Aris Thorne",
+        "role": "HR Director / Admin",
+        "scope": "Full executive privileges & bias audit",
+    },
+    "analyst": {
+        "password": "analyst123",
+        "name": "Neha Sharma",
+        "role": "People Analytics Lead",
+        "scope": "Analytics & bias audit access",
+    },
+}
+
+
+def render_login():
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<div style='text-align: center; margin-top: 40px;'>", unsafe_allow_html=True)
+        st.title("🏢 Workplace Gender Equality Portal")
+        st.caption("AI-Powered HR Analytics & Bias Detection (SDG 5)")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        with st.container(border=True):
+            st.subheader("🔐 Enterprise Sign-In")
+            st.write("Please authenticate to access HR metrics, representation models, and bias audit tools.")
+
+            with st.form("login_form"):
+                username = st.text_input("Username", placeholder="e.g. admin or analyst")
+                password = st.text_input("Password", type="password", placeholder="Enter your password")
+                submitted = st.form_submit_button("Sign In", use_container_width=True)
+
+                if submitted:
+                    user = USERS.get(username.strip())
+                    if user and user["password"] == password:
+                        st.session_state["authenticated"] = True
+                        st.session_state["username"] = username.strip()
+                        st.session_state["user"] = user
+                        st.success(f"Welcome back, {user['name']}!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid username or password. Please check demo credentials below.")
+
+            st.divider()
+            st.markdown("##### 🔑 Demo Credentials")
+            demo_col1, demo_col2 = st.columns(2)
+            with demo_col1:
+                st.info("**Admin / HR Director**\n- User: `admin`\n- Pass: `admin123`")
+            with demo_col2:
+                st.info("**Analytics Lead**\n- User: `analyst`\n- Pass: `analyst123`")
+
+
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    render_login()
+    st.stop()
+
 # ----------------------------------------------------------------------
 st.title("🧭 AI-Based Workplace Gender Equality Analytics")
 st.caption("SDG 5 — Gender Equality  |  Minor Project Dashboard")
@@ -80,6 +140,19 @@ st.caption("SDG 5 — Gender Equality  |  Minor Project Dashboard")
 df = load_data()
 
 with st.sidebar:
+    curr_user = st.session_state.get("user", {})
+    st.markdown(f"### 👤 Logged In")
+    st.markdown(f"**{curr_user.get('name', 'User')}**")
+    st.caption(f"Role: {curr_user.get('role', 'Member')}")
+    st.caption(f"Scope: {curr_user.get('scope', 'Standard')}")
+
+    if st.button("🚪 Sign Out", use_container_width=True):
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = None
+        st.session_state["user"] = None
+        st.rerun()
+
+    st.divider()
     st.header("Filters")
     dept_filter = st.multiselect("Department", sorted(df.department.unique()),
                                   default=list(df.department.unique()))

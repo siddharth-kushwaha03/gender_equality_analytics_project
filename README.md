@@ -52,6 +52,17 @@ python3 analytics.py
 streamlit run app.py
 ```
 
+### Dashboard Authentication (Demo Credentials)
+
+The dashboard is secured behind an enterprise login page simulating HR role-based access control:
+
+| Role | Username | Password | Access Scope |
+| :--- | :--- | :--- | :--- |
+| **HR Director / Admin** | `admin` | `admin123` | Full dashboard access with executive privileges |
+| **People Analytics Lead** | `analyst` | `analyst123` | Analytics & bias audit access |
+
+*(You can also sign out at any time using the **Sign Out** button in the sidebar).*
+
 ## Notes for the viva / presentation
 
 - The dataset is **synthetic** (randomly generated, not real employee
