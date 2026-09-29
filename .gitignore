@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+venv/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+
+# Generated outputs (re-run analytics.py to regenerate)
+outputs/*.png
+outputs/metrics_summary.json
+
+# Saved models (re-run analytics.py to regenerate)
+models/
+
+# Keep data and outputs directory structure
+!outputs/.gitkeep
+!models/.gitkeep

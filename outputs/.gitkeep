@@ -1,0 +1,3 @@
+# This file keeps the outputs/ directory tracked by Git.
+# Actual chart PNGs and metrics_summary.json are in .gitignore.
+# Run:  python3 analytics.py  to regenerate them.
