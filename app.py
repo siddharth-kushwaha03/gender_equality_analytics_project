@@ -56,22 +56,70 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# Credentials — loaded from environment variables (demo fallback)
+# Multi-User Database Init
 # ---------------------------------------------------------------------------
-USERS = {
-    os.getenv("ADMIN_USERNAME", "admin"): {
-        "password": os.getenv("ADMIN_PASSWORD", "admin123"),
-        "name": "Dr. Aris Thorne",
-        "role": "HR Director / Admin",
-        "scope": "Full executive privileges & bias audit",
-    },
-    os.getenv("ANALYST_USERNAME", "analyst"): {
-        "password": os.getenv("ANALYST_PASSWORD", "analyst123"),
-        "name": "Neha Sharma",
-        "role": "People Analytics Lead",
-        "scope": "Analytics & bias audit access",
-    },
-}
+import sqlite3
+
+DB_PATH = "users.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT,
+            name TEXT,
+            role TEXT,
+            scope TEXT
+        )
+    ''')
+    
+    # Check if admin exists, if not create demo accounts
+    c.execute('SELECT username FROM users WHERE username = "admin"')
+    if not c.fetchone():
+        # Demo admin
+        admin_hash = hashlib.sha256(os.getenv("ADMIN_PASSWORD", "admin123").encode()).hexdigest()
+        admin_user = os.getenv("ADMIN_USERNAME", "admin")
+        c.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?)', 
+                  (admin_user, admin_hash, "Dr. Aris Thorne", "HR Director / Admin", "Full executive privileges & bias audit"))
+        
+        # Demo analyst
+        analyst_hash = hashlib.sha256(os.getenv("ANALYST_PASSWORD", "analyst123").encode()).hexdigest()
+        analyst_user = os.getenv("ANALYST_USERNAME", "analyst")
+        c.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?)', 
+                  (analyst_user, analyst_hash, "Neha Sharma", "People Analytics Lead", "Analytics & bias audit access"))
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def authenticate_user(username, password):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT username, name, role, scope FROM users WHERE username = ? AND password_hash = ?', 
+              (username, hash_password(password)))
+    user = c.fetchone()
+    conn.close()
+    if user:
+        return {"username": user[0], "name": user[1], "role": user[2], "scope": user[3]}
+    return None
+
+def register_new_user(username, password, name):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO users (username, password_hash, name, role, scope) VALUES (?, ?, ?, ?, ?)', 
+                  (username, hash_password(password), name, "User", "Standard Analytics"))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
 
 
 # ---------------------------------------------------------------------------
@@ -130,6 +178,30 @@ def _fig_to_bytes(fig) -> bytes:
 # ---------------------------------------------------------------------------
 
 def render_login():
+    # Inject CSS for gradient background and glassmorphism (Only on login page)
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #8e2de2 100%) !important;
+    }
+    .stAppHeader {
+        background-color: transparent !important;
+    }
+    [data-testid="stForm"] {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        padding: 2rem;
+    }
+    .stMarkdownContainer, .stMarkdownContainer p, h1, h2, h3, label {
+        color: #ffffff !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown(
@@ -138,49 +210,53 @@ def render_login():
         )
         st.title("🏢 Workplace Gender Equality Portal")
         st.caption("AI-Powered HR Analytics & Bias Detection (SDG 5)")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div><br>", unsafe_allow_html=True)
 
-        with st.container(border=True):
-            st.subheader("🔐 Enterprise Sign-In")
-            st.write(
-                "Please authenticate to access HR metrics, "
-                "representation models, and bias audit tools."
-            )
+        tab_login, tab_register = st.tabs(["🔐 Login", "📝 Register"])
 
+        with tab_login:
             with st.form("login_form"):
-                username = st.text_input(
-                    "Username", placeholder="e.g. admin or analyst"
-                )
-                password = st.text_input(
-                    "Password", type="password", placeholder="Enter your password"
-                )
-                submitted = st.form_submit_button(
-                    "Sign In", use_container_width=True
-                )
+                username = st.text_input("Username", placeholder="e.g. admin or analyst")
+                password = st.text_input("Password", type="password", placeholder="Enter your password")
+                submitted = st.form_submit_button("Sign In", use_container_width=True)
 
                 if submitted:
-                    user = USERS.get(username.strip())
-                    if user and user["password"] == password:
+                    user = authenticate_user(username.strip(), password)
+                    if user:
                         st.session_state["authenticated"] = True
                         st.session_state["username"] = username.strip()
                         st.session_state["user"] = user
                         st.success(f"Welcome back, {user['name']}!")
                         st.rerun()
                     else:
-                        st.error(
-                            "Invalid username or password. "
-                            "Please check demo credentials below."
-                        )
+                        st.error("Invalid username or password. Please try again.")
 
-            st.divider()
             st.markdown("##### 🔑 Demo Credentials")
             dc1, dc2 = st.columns(2)
             with dc1:
-                st.info("**Admin / HR Director**\n- User: `admin`\n- Pass: `admin123`")
+                st.info("**Admin**\n- User: `admin`\n- Pass: `admin123`")
             with dc2:
-                st.info(
-                    "**Analytics Lead**\n- User: `analyst`\n- Pass: `analyst123`"
-                )
+                st.info("**Analyst**\n- User: `analyst`\n- Pass: `analyst123`")
+
+        with tab_register:
+            with st.form("register_form"):
+                reg_name = st.text_input("Full Name")
+                reg_user = st.text_input("Username")
+                reg_pass = st.text_input("Password", type="password")
+                reg_confirm = st.text_input("Confirm Password", type="password")
+                reg_submitted = st.form_submit_button("Register", use_container_width=True)
+
+                if reg_submitted:
+                    if not reg_name or not reg_user or not reg_pass:
+                        st.error("All fields are required!")
+                    elif reg_pass != reg_confirm:
+                        st.error("Passwords do not match!")
+                    else:
+                        success = register_new_user(reg_user.strip(), reg_pass, reg_name.strip())
+                        if success:
+                            st.success("Registration successful! Please go to the Login tab to sign in.")
+                        else:
+                            st.error("Username already exists. Please choose a different one.")
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +296,12 @@ with st.sidebar:
     )
 
     df: pd.DataFrame | None = None
+    
+    # User specific data directory
+    USER_DATA_DIR = "user_data"
+    os.makedirs(USER_DATA_DIR, exist_ok=True)
+    current_username = st.session_state.get("username", "default")
+    user_csv_path = os.path.join(USER_DATA_DIR, f"{current_username}_data.csv")
 
     if data_source == "Upload your CSV":
         uploaded_file = st.file_uploader(
@@ -234,13 +316,23 @@ with st.sidebar:
         if uploaded_file is not None:
             try:
                 df = _load_uploaded_csv(uploaded_file)
-                st.success(f"✅ Loaded {len(df):,} records.")
+                # Save specifically for this user
+                df.to_csv(user_csv_path, index=False)
+                st.success(f"✅ Data uploaded securely for user '{current_username}'. Loaded {len(df):,} records.")
             except (ValueError, Exception) as exc:
                 st.error(f"❌ Invalid data:\n\n{exc}")
                 st.stop()
         else:
-            st.info("⬆️ Please upload a CSV file to continue.")
-            st.stop()
+            if os.path.exists(user_csv_path):
+                try:
+                    df = pd.read_csv(user_csv_path)
+                    st.info(f"Using your previously uploaded data ({len(df):,} records). Upload a new file to overwrite.")
+                except Exception as e:
+                    st.error(f"Could not load previous data: {e}")
+                    st.stop()
+            else:
+                st.info("⬆️ Please upload a CSV file to continue.")
+                st.stop()
     else:
         try:
             df = _load_default_csv()
