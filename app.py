@@ -303,7 +303,7 @@ with st.sidebar:
     current_username = st.session_state.get("username", "default")
     user_csv_path = os.path.join(USER_DATA_DIR, f"{current_username}_data.csv")
 
-    if data_source == "Upload your CSV":
+    if data_source == "Upload your Data":
         uploaded_file = st.file_uploader(
             "Upload employee CSV",
             type=["csv"],
