@@ -56,6 +56,51 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
+# Background Image Setup
+# ---------------------------------------------------------------------------
+import base64
+
+def set_background(image_path):
+    if not os.path.exists(image_path):
+        return
+    
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+        
+    ext = image_path.split('.')[-1]
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/{ext};base64,{encoded_string}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        /* Optional: Add a slight overlay so text remains readable */
+        .stApp::before {{
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.85); /* 85% white overlay */
+            z-index: -1;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# Try loading the background image (user needs to save their image as 'background.png' or 'background.jpg' in the project folder)
+if os.path.exists("background.png"):
+    set_background("background.png")
+elif os.path.exists("background.jpg"):
+    set_background("background.jpg")
+
+# ---------------------------------------------------------------------------
 # Multi-User Database Init
 # ---------------------------------------------------------------------------
 import sqlite3
