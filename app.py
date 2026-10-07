@@ -292,7 +292,7 @@ with st.sidebar:
     # --- Data source ---
     st.header("📂 Data Source")
     data_source = st.radio(
-        "Choose data source:", ["Default dataset", "Upload your CSV"]
+        "Choose data source:", ["Default dataset", "Upload your Data"]
     )
 
     df: pd.DataFrame | None = None
@@ -414,7 +414,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🏢 Pay Equity — Dept",
     "📈 Promotion & Attrition",
     "🤖 AI Bias Audit",
-    "📋 Raw Data",
+    "📋 Data",
 ])
 
 
