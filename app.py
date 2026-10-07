@@ -56,51 +56,6 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
-# Background Image Setup
-# ---------------------------------------------------------------------------
-import base64
-
-def set_background(image_path):
-    if not os.path.exists(image_path):
-        return
-    
-    with open(image_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-        
-    ext = image_path.split('.')[-1]
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/{ext};base64,{encoded_string}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        /* Optional: Add a slight overlay so text remains readable */
-        .stApp::before {{
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.85); /* 85% white overlay */
-            z-index: -1;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-# Try loading the background image (user needs to save their image as 'background.png' or 'background.jpg' in the project folder)
-if os.path.exists("background.png"):
-    set_background("background.png")
-elif os.path.exists("background.jpg"):
-    set_background("background.jpg")
-
-# ---------------------------------------------------------------------------
 # Multi-User Database Init
 # ---------------------------------------------------------------------------
 import sqlite3
@@ -223,29 +178,84 @@ def _fig_to_bytes(fig) -> bytes:
 # ---------------------------------------------------------------------------
 
 def render_login():
-    # Inject CSS for gradient background and glassmorphism (Only on login page)
-    st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #8e2de2 100%) !important;
-    }
-    .stAppHeader {
-        background-color: transparent !important;
-    }
-    [data-testid="stForm"] {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        padding: 2rem;
-    }
-    .stMarkdownContainer, .stMarkdownContainer p, h1, h2, h3, label {
-        color: #ffffff !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    import base64
+    import os
+    
+    # Check if a custom background image exists
+    image_path = None
+    if os.path.exists("background.png"):
+        image_path = "background.png"
+    elif os.path.exists("background.jpg"):
+        image_path = "background.jpg"
+        
+    if image_path:
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+        ext = image_path.split('.')[-1]
+        
+        st.markdown(
+            f"""
+            <style>
+            .stApp {{
+                background-image: url("data:image/{ext};base64,{encoded_string}") !important;
+                background-size: cover !important;
+                background-position: center !important;
+                background-repeat: no-repeat !important;
+                background-attachment: fixed !important;
+            }}
+            .stApp::before {{
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.4); /* Dark overlay for better form readability */
+                z-index: -1;
+            }}
+            .stAppHeader {{
+                background-color: transparent !important;
+            }}
+            [data-testid="stForm"] {{
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 15px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+                padding: 2rem;
+            }}
+            .stMarkdownContainer, .stMarkdownContainer p, h1, h2, h3, label {{
+                color: #ffffff !important;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        # Fallback to gradient if no image is found
+        st.markdown("""
+        <style>
+        .stApp {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #8e2de2 100%) !important;
+        }
+        .stAppHeader {
+            background-color: transparent !important;
+        }
+        [data-testid="stForm"] {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+        }
+        .stMarkdownContainer, .stMarkdownContainer p, h1, h2, h3, label {
+            color: #ffffff !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
