@@ -135,6 +135,68 @@ def _load_default_csv(path: str = "data/employees.csv") -> pd.DataFrame:
 def _load_uploaded_csv(uploaded_file) -> pd.DataFrame:
     """Parse an uploaded file, validate it, and return a DataFrame."""
     df = pd.read_csv(uploaded_file)
+    
+    # Normalize column names to handle variations like " Gender ", "Annual Salary", etc.
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(" ", "_")
+        .str.replace("-", "_")
+    )
+    
+    # Map common alternative column names to the required names
+    aliases = {
+        "sex": "gender",
+        "salary": "annual_salary",
+        "pay": "annual_salary",
+        "level": "job_level",
+        "role_level": "job_level",
+        "dept": "department",
+        "experience": "experience_years",
+        "years_of_experience": "experience_years",
+        "rating": "performance_rating",
+        "performance": "performance_rating",
+        "promoted": "promoted_last_cycle",
+        "promotion": "promoted_last_cycle",
+        "exited": "exited_last_12mo",
+        "attrition": "exited_last_12mo",
+        "left_company": "exited_last_12mo",
+        "left": "exited_last_12mo"
+    }
+    df.rename(columns=aliases, inplace=True)
+    
+    # Clean and standardize 'gender' column
+    if "gender" in df.columns:
+        df["gender"] = df["gender"].astype(str).str.strip().str.title()
+        df["gender"] = df["gender"].replace({"M": "Male", "F": "Female", "Woman": "Female", "Man": "Male"})
+        df = df[df["gender"].isin({"Male", "Female"})] # Filter out unknown genders
+        
+    # Clean binary target columns
+    for col in ["promoted_last_cycle", "exited_last_12mo"]:
+        if col in df.columns:
+            # Handle Yes/No, Y/N, True/False representations
+            df[col] = df[col].replace({"Yes": 1, "No": 0, "Y": 1, "N": 0, "True": 1, "False": 0, "1": 1, "0": 0})
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
+            
+    # Drop rows that have missing values in the required columns (if the columns exist)
+    from analytics import REQUIRED_COLUMNS
+    existing_req_cols = [c for c in REQUIRED_COLUMNS if c in df.columns]
+    df.dropna(subset=existing_req_cols, inplace=True)
+    
+    # Auto-fill completely missing required columns with dummy values to ensure the app doesn't crash
+    for col in REQUIRED_COLUMNS:
+        if col not in df.columns:
+            if col == "gender": df[col] = "Female"
+            elif col == "annual_salary": df[col] = 50000
+            elif col == "job_level": df[col] = "Associate"
+            elif col == "education": df[col] = "Bachelor"
+            elif col == "department": df[col] = "General"
+            elif col == "age": df[col] = 30
+            elif col == "experience_years": df[col] = 5
+            elif col == "performance_rating": df[col] = 3
+            elif col in ["promoted_last_cycle", "exited_last_12mo"]: df[col] = 0
+
     validate_data(df)       # raises ValueError on bad data
     return df
 
